@@ -5,30 +5,32 @@ using UnityEngine;
 
 namespace LPE2D {
     public class ShapeManager {
-        LinkedList<Shape2D> _shapes = new LinkedList<Shape2D>();
-        QuadTreePartion partionRoot;
+        
+        LinkedList<Astroid> _shapes = new LinkedList<Astroid>();
+        public static QuadTreePartion<Astroid> partionRoot;
 
         public ShapeManager(Vector2 mapSize) {
-            partionRoot = new QuadTreePartion(mapSize / -2, mapSize / 2, 8, 3);
+            partionRoot = new QuadTreePartion<Astroid>();
+            partionRoot.Initialize(mapSize / -2, mapSize / 2, 9,5);
         }
 
         public void OnDrawGizmos() {
-            foreach (var s in _shapes) {
-                Gizmos.color = partionRoot.IsColliding(s) ? Color.red : Color.green;
-                s.OnDrawGizmos();
-            }
             Gizmos.color = Color.white;
             partionRoot.OnDrawGizmos();
+
+            foreach (var s in _shapes) {
+                Gizmos.color = partionRoot.IsColliding(s) ? Color.red : Color.green;
+                s.shape.OnDrawGizmos();
+            }
         }
 
-        public void AddShape(Shape2D s) {
+        public void AddShape(Astroid s) {
             _shapes.AddLast(s);
             partionRoot.AddShape(s);
-            s.OnChange += ShapeChanged;
+            s.OnShapeUpdate += () => { ShapeChanged(s); };
         }
-        void ShapeChanged(Shape2D s) {
-            partionRoot.RemoveShape(s);
-            partionRoot.AddShape(s);
+        void ShapeChanged(Astroid s) {
+            partionRoot.UpdateShape(s);
         }
         public void CleanUpMapTree() {
             partionRoot.CleanUp();

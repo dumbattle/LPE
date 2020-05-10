@@ -12,6 +12,10 @@ public class Main : MonoBehaviour {
     void Update() {
 
     }
+<<<<<<< HEAD
 }
 
 public static class Pathfinding2D { }
+=======
+}
+>>>>>>> d0db458347d69f898f943a0403a0b72938cf7202

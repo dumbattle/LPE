@@ -6,7 +6,8 @@ namespace LPE {
     public class ObjectPool<T> where T : class {
         Dictionary<T, Item> returnDict = new Dictionary<T, Item>();
         Func<T> _constructor;
-        List<Item> items = new List<Item>();
+        LinkedList<Item> freeItems = new LinkedList<Item>();
+        LinkedList<Item> usedItems = new LinkedList<Item>();
 
         public ObjectPool(Func<T> constructor) {
             _constructor = constructor;
@@ -18,48 +19,51 @@ namespace LPE {
                 CreateItem();
             }
         }
-
         public T Get() {
-            for (int i = 0; i < items.Count; i++) {
-                Item item = items[i];
-                if (!item.active) {
-                    item.active = true;
-                    return item.obj;
-                }
+
+            if (freeItems.First != null) {
+                var n = freeItems.First;
+
+                freeItems.RemoveFirst();
+                usedItems.AddLast(n);
+
+                return n.Value.obj;
             }
 
             var newItem = CreateItem();
 
-            newItem.active = true;
-            return newItem.obj;
+            return Get();
         }
 
         public void Return(T t) {
-            Item item = returnDict[t];
-
-            item.active = false;
+            var n = returnDict[t].node;
+            
+            usedItems.Remove(n);
+            freeItems.AddLast(n);
         }
 
         Item CreateItem() {
             T t = _constructor();
             Item i = new Item(t);
+
             returnDict.Add(t, i);
-            items.Add(i);
+            freeItems.AddLast(i.node);
             return i;
         }
 
 
         class Item {
             public T obj;
-            public bool active = false;
+            public LinkedListNode<Item> node;
 
             public Item(T t) {
                 obj = t;
+                node = new LinkedListNode<Item>(this);
             }
         }
 
         public IEnumerator<T> GetEnumerator() {
-            foreach (var t in items) {
+            foreach (var t in freeItems) {
                 yield return t.obj;
             }
         }
