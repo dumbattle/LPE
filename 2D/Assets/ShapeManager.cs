@@ -5,18 +5,25 @@ using UnityEngine;
 
 namespace LPE2D {
     public class ShapeManager {
-        
+        IShape2D obstacle;
         LinkedList<Astroid> _shapes = new LinkedList<Astroid>();
-        public static QuadTreePartion<Astroid> partionRoot;
+        public static QuadTreePartion<IShape2D> partionRoot;
 
         public ShapeManager(Vector2 mapSize) {
-            partionRoot = new QuadTreePartion<Astroid>();
-            partionRoot.Initialize(mapSize / -2, mapSize / 2, 9,5);
+            partionRoot = new QuadTreePartion<IShape2D>();
+            partionRoot.Initialize(mapSize / -2, mapSize / 2, 7, 3);
+            obstacle = new RectangleShape(43f, 43f) {
+                position = Vector2.zero
+            };
+            ShapeManager.partionRoot.AddShape(obstacle);
         }
 
         public void OnDrawGizmos() {
-            Gizmos.color = Color.white;
-            partionRoot.OnDrawGizmos();
+            Gizmos.color = Color.green;
+            obstacle.shape.OnDrawGizmos();
+
+            //Gizmos.color = Color.white;
+            //partionRoot.OnDrawGizmos();
 
             foreach (var s in _shapes) {
                 Gizmos.color = partionRoot.IsColliding(s) ? Color.red : Color.green;

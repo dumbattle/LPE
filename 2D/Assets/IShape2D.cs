@@ -269,7 +269,7 @@ namespace LPE2D {
                 }
             }
 
-            return correctionVector.normalized * minDist;
+            return correctionVector.normalized * -minDist;
         }
 
 
@@ -346,6 +346,7 @@ namespace LPE2D {
             this._width = width;
             this._height = height;
             OnShapeUpdate += UpdateVertices;
+            UpdateVertices();
         }
 
         public override Vector2 Project(Vector2 line) {
@@ -391,6 +392,7 @@ namespace LPE2D {
         }
 
         public override void OnDrawGizmos() {
+         
             Gizmos.DrawLine(v1, v2);
             Gizmos.DrawLine(v2, v3);
             Gizmos.DrawLine(v3, v4);
