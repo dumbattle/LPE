@@ -2,75 +2,71 @@
 using System;
 
 namespace LPE.Graph {
-    public class GraphNode<T> {
-        List<NodeConnection<T>> _connections = new List<NodeConnection<T>>();
+    public partial class GraphNode<T> {
+        Dictionary<GraphNode<T>, NodeConnection<T>> _connections = new Dictionary<GraphNode<T>, NodeConnection<T>>();
 
-        public Graph<T> graph { get; private set; }
         public T value { get; private set; }
 
 
-        public GraphNode(Graph<T> graph, T value) {
-            this.graph = graph;
+        public GraphNode( T value) {
             this.value = value;
         }
-        public GraphEdge<T> AddConnection(GraphNode<T> other, bool directed) {
-            if (other.graph != graph) {
-                throw new InvalidOperationException($"ERROR: connecting nodes: Nods are not a part of the same graph");
-            }
 
-            GraphEdge<T> e = new GraphEdge<T>(graph, this, other) {
+
+        public GraphEdge<T> AddConnection(GraphNode<T> other, bool directed) {
+
+            GraphEdge<T> e = new GraphEdge<T>(this, other) {
                 directed = directed
             };
 
             if (directed) {
-                _connections.Add(new NodeConnection<T>(other, e, ConnectionType.away));
-                other._connections.Add(new NodeConnection<T>(this, e, ConnectionType.towards));
+                _connections.Add(other, new NodeConnection<T>(other, e, ConnectionType.away));
+                other._connections.Add(this, new NodeConnection<T>(this, e, ConnectionType.towards));
             }
             else {
-                _connections.Add(new NodeConnection<T>(other, e, ConnectionType.nonDirected));
-                other._connections.Add(new NodeConnection<T>(this, e, ConnectionType.nonDirected));
+                _connections.Add(other, new NodeConnection<T>(other, e, ConnectionType.nonDirected));
+                other._connections.Add(this, new NodeConnection<T>(this, e, ConnectionType.nonDirected));
             }
 
             return e;
         }
 
+
+
         public IEnumerable<GraphNode<T>> NextNodes() {
             foreach (var c in _connections) {
-                if (c.type == ConnectionType.away) {
-                    yield return c.otherNode;
+                if (c.Value.type == ConnectionType.away) {
+                    yield return c.Value.otherNode;
                 }
             }
         }
         public IEnumerable<GraphNode<T>> PreviousNodes() {
             foreach (var c in _connections) {
-                if (c.type == ConnectionType.towards) {
-                    yield return c.otherNode;
+                if (c.Value.type == ConnectionType.towards) {
+                    yield return c.Value.otherNode;
                 }
             }
         }
         public IEnumerable<GraphNode<T>> NonDirectedConnectedNode() {
             foreach (var c in _connections) {
-                if (c.type == ConnectionType.nonDirected) {
-                    yield return c.otherNode;
+                if (c.Value.type == ConnectionType.nonDirected) {
+                    yield return c.Value.otherNode;
                 }
             }
         }
+
         public IEnumerable<GraphNode<T>> ConnectedNodes() {
             foreach (var c in _connections) {
-                yield return c.otherNode;
+                yield return c.Value.otherNode;
             }
         }
         public IEnumerable<NodeConnection<T>> Connections() {
             foreach (var c in _connections) {
-                yield return c;
+                yield return c.Value;
             }
         }
 
         public float DistanceTo(GraphNode<T> other) {
-            if (other.graph != graph) {
-                throw new InvalidOperationException("Nodes are not part of the same graph");
-            }
-
             LinkedList<(GraphNode<T> node, float dist)> queue = new LinkedList<(GraphNode<T>, float)>();
             queue.AddFirst((this, 0));
             List<GraphNode<T>> visited = new List<GraphNode<T>>();
@@ -89,7 +85,8 @@ namespace LPE.Graph {
                     return next.Value.dist;
                 }
 
-                foreach (var c in next.Value.node._connections) {
+                foreach (var kv in next.Value.node._connections) {
+                    var c = kv.Value;
                     if (c.type == ConnectionType.nonDirected || c.type == ConnectionType.away) {
                         float dist = next.Value.dist + c.edge.weight;
                         var n = queue.First;
@@ -121,7 +118,8 @@ namespace LPE.Graph {
             for (int i = 0; i < result.Count; i++) {
                 GraphNode<T> currentNode = result[i];
 
-                foreach (var c in currentNode._connections) {
+                foreach (var kv in currentNode._connections) {
+                    var c = kv.Value;
                     if (c.type == ConnectionType.nonDirected || c.type == ConnectionType.away) {
                         if (!result.Contains(c.otherNode)) {
                             result.Add(c.otherNode);

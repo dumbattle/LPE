@@ -1,4 +1,5 @@
-﻿namespace LPE.Graph {
+﻿using System;
+namespace LPE.Graph {
     public class NodeConnection<T> {
         public GraphNode<T> otherNode {get; private set; }
         public ConnectionType type { get; private set; }

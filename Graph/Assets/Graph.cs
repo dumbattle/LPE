@@ -51,7 +51,7 @@ namespace LPE.Graph {
 
         // node creation
         public GraphNode<T> CreateNode(T value) {
-            var n = new GraphNode<T>(this, value);
+            var n = new GraphNode<T>(value);
             _nodes.Add(n);
             return n;
         }
@@ -65,16 +65,13 @@ namespace LPE.Graph {
 
         // node connections
         public GraphEdge<T> ConnectNodes(GraphNode<T> first, GraphNode<T> second, bool directed = false) {
-            if (first.graph != this) {
-                throw new InvalidOperationException($"ERROR: connecting nodes: Node 1 [value = {first.value}] is not a part of the graph");
-            }
-            if (second.graph != this) {
-                throw new InvalidOperationException($"ERROR: connecting nodes: Node 1 [value = {first.value}] is not a part of the graph");
-            }
             var e = (first.AddConnection(second, directed));
             _edges.Add(e);
 
             return e;
         }
+
+
     }
+
 }
