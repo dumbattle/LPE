@@ -55,6 +55,7 @@ public class Astroid : IShape2D {
             direction = Vector2.Lerp(prevDirection, direction, .5f);
         }
 
+
         direction.Normalize();
         Move(direction);
 
@@ -63,6 +64,7 @@ public class Astroid : IShape2D {
             push = Vector2.zero;
             pushCount = 0;
             Move(p);
+
         }
 
         if (!startedColliding && ShapeManager.partionRoot.IsColliding(this)) {
@@ -101,16 +103,16 @@ public class Astroid : IShape2D {
         al.Clear();
         ShapeManager.partionRoot.GetOverlap(this, al);
 
-        if (al.Count > 1) { // dont include self
+        if (al.Count > 0) {
             foreach (var o in al) {
-                if (o is Astroid a) {
-                    Vector2 cv = _rect.CheckCollisionWithCorrection(o);
-                    a.push -= cv;
-                    a.pushCount++;
+                Vector2 cv = _rect.CheckCollisionWithCorrection(o);
 
-                    push += cv;
-                    pushCount++;
-                }
+                push += cv;
+                pushCount++;
+                //if (o is Astroid a) {
+                //    a.push -= cv;
+                //    a.pushCount++;
+                //}
             }
         }
 

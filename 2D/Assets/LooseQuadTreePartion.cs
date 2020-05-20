@@ -9,17 +9,12 @@ namespace LPE2D {
             partitionPool = new ObjectPool<LooseQuadTreePartion<T>>(() => new LooseQuadTreePartion<T>());
         }
 
-        //public QuadTreePartion<T> parent { get; private set; }
 
         public LooseQuadTreePartion<T> q1 { get; private set; }
         public LooseQuadTreePartion<T> q2 { get; private set; }
         public LooseQuadTreePartion<T> q3 { get; private set; }
         public LooseQuadTreePartion<T> q4 { get; private set; }
 
-        public LooseQuadTreePartion<T> bottom { get; private set; }
-        public LooseQuadTreePartion<T> top { get; private set; }
-        public LooseQuadTreePartion<T> right { get; private set; }
-        public LooseQuadTreePartion<T> left { get; private set; }
 
         public bool leaf => q1 == null;
 
@@ -53,11 +48,13 @@ namespace LPE2D {
                     float maxY = float.MinValue;
 
                     foreach (var s in _shapes) {
-                        minX = minX > s.shape.AABB().min.x ? s.shape.AABB().min.x : minX;
-                        maxX = maxX < s.shape.AABB().max.x ? s.shape.AABB().max.x : maxX;
+                        (Vector2 smin, Vector2 smax) = s.shape.AABB();
 
-                        minY = minY > s.shape.AABB().min.y ? s.shape.AABB().min.y : minY;
-                        maxY = maxY < s.shape.AABB().max.y ? s.shape.AABB().max.y : maxY;
+                        minX = smin.x < minX ? smin.x : minX;
+                        maxX = smax.x > maxX ? smax.x : maxX;
+
+                        minY = smin.y < minY ? smin.y : minY;
+                        maxY = smax.y > maxY ? smax.y : maxY;
                     }
 
                     boundsMin = new Vector2(minX, minY);
@@ -114,16 +111,11 @@ namespace LPE2D {
             this.maxDepth = maxDepth;
             this.maxOccupants = maxOccupants;
 
-            bottom = null;
-            top = null;
-            right = null;
-            left = null;
 
             _shapes.Clear();
         }
 
         public void UpdateShape(T s) {
-
             Vector2 p = s.shape.position;
 
             (Vector2 min, Vector2 max) aabb = s.shape.AABB();
@@ -146,7 +138,6 @@ namespace LPE2D {
                     AddShape(s);
                 }
             }
-
         }
 
         public void AddShape(T s) {
@@ -189,6 +180,7 @@ namespace LPE2D {
                 q3.RemoveShape(s);
                 q4.RemoveShape(s);
             }
+            CalculateBounds();
         }
 
         public void CleanUp() {
@@ -249,7 +241,6 @@ namespace LPE2D {
         }
 
         public void GetOverlap(IShape2D s, List<T> results) {
-
             results = results ?? new List<T>();
             if (_shapes.Count == 0) {
                 return;
@@ -272,124 +263,18 @@ namespace LPE2D {
             }
             else {
 
-                if (Overlap(aabbmin, aabbmax, q1.min, q1.max)) {
+                if (Overlap(aabbmin, aabbmax, q1.boundsMin, q1.boundsMax)) {
                     q1.GetOverlap(s, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q2.min, q2.max)) {
+                if (Overlap(aabbmin, aabbmax, q2.boundsMin, q2.boundsMax)) {
                     q2.GetOverlap(s, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q3.min, q3.max)) {
+                if (Overlap(aabbmin, aabbmax, q3.boundsMin, q3.boundsMax)) {
                     q3.GetOverlap(s, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q4.min, q4.max)) {
+                if (Overlap(aabbmin, aabbmax, q4.boundsMin, q4.boundsMax)) {
                     q4.GetOverlap(s, results);
                 }
-            }
-        }
-
-        public IEnumerable<LooseQuadTreePartion<T>> TopmostNodes() {
-            if (leaf) {
-                yield return this;
-                yield break;
-            }
-
-            foreach (var p in q1.TopmostNodes()) {
-                yield return p;
-            }
-            foreach (var p in q2.TopmostNodes()) {
-                yield return p;
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> BottommostNodes() {
-            if (leaf) {
-                yield return this;
-                yield break;
-            }
-
-            foreach (var p in q3.BottommostNodes()) {
-                yield return p;
-            }
-            foreach (var p in q4.BottommostNodes()) {
-                yield return p;
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> RightmostNodes() {
-            if (leaf) {
-                yield return this;
-                yield break;
-            }
-
-            foreach (var p in q1.RightmostNodes()) {
-                yield return p;
-            }
-            foreach (var p in q4.RightmostNodes()) {
-                yield return p;
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> LeftmostNodes() {
-            if (leaf) {
-                yield return this;
-                yield break;
-            }
-
-            foreach (var p in q2.LeftmostNodes()) {
-                yield return p;
-            }
-            foreach (var p in q3.LeftmostNodes()) {
-                yield return p;
-            }
-        }
-
-        public IEnumerable<LooseQuadTreePartion<T>> AdjacentTop() {
-            if (top != null) {
-                foreach (var t in top.BottommostNodes()) {
-                    if (!(t.min.x >= max.x || t.max.x <= min.x)) {
-                        yield return t;
-                    }
-                }
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> AdjacentBottom() {
-            if (bottom != null) {
-                foreach (var t in bottom.TopmostNodes()) {
-                    if (!(t.min.x >= max.x || t.max.x <= min.x)) {
-                        yield return t;
-                    }
-                }
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> AdjacentRight() {
-            if (right != null) {
-                foreach (var t in right.LeftmostNodes()) {
-                    if (!(t.min.y >= max.y || t.max.y <= min.y)) {
-                        yield return t;
-                    }
-                }
-            }
-        }
-        public IEnumerable<LooseQuadTreePartion<T>> Adjacentleft() {
-
-            if (left != null) {
-                foreach (var t in left.RightmostNodes()) {
-                    if (!(t.min.y >= max.y || t.max.y <= min.y)) {
-                        yield return t;
-                    }
-                }
-            }
-        }
-
-        public IEnumerable<LooseQuadTreePartion<T>> AdjacentNodes() {
-            foreach (var n in AdjacentTop()) {
-                yield return n;
-            }
-            foreach (var n in AdjacentBottom()) {
-                yield return n;
-            }
-            foreach (var n in AdjacentRight()) {
-                yield return n;
-            }
-            foreach (var n in Adjacentleft()) {
-                yield return n;
             }
         }
 
@@ -413,26 +298,6 @@ namespace LPE2D {
                     new Vector2(midX, min.y),
                     new Vector2(max.x, midY), maxDepth - 1, maxOccupants);
 
-            q1.top = top;
-            q1.bottom = q4;
-            q1.right = right;
-            q1.left = q2;
-
-            q2.top = top;
-            q2.bottom = q3;
-            q2.right = q1;
-            q2.left = left;
-
-            q3.top = q2;
-            q3.bottom = bottom;
-            q3.right = q4;
-            q3.left = left;
-
-            q4.top = q1;
-            q4.bottom = bottom;
-            q4.right = right;
-            q4.left = q3;
-
 
             foreach (var s in _shapes) {
                 var p = s.shape.position;
@@ -452,64 +317,40 @@ namespace LPE2D {
         }
 
         public void OnDrawGizmos() {
-            if (leaf) {
-                Gizmos.color = Color.black;
-                Vector2 center = (min + max) / 2;
-                foreach (var t in AdjacentTop()) {
-                    Gizmos.DrawLine(
-                        center,
-                        (t.min + t.max) / 2);
-                }
-                foreach (var t in AdjacentRight()) {
-                    Gizmos.DrawLine(
-                        center,
-                        (t.min + t.max) / 2);
-                }
-                return;
-            }
-
-            if (_shapes.Count == 0) {
+            if (leaf && _shapes.Count == 0) {
                 return;
             }
             q1?.OnDrawGizmos();
             q2?.OnDrawGizmos();
             q3?.OnDrawGizmos();
             q4?.OnDrawGizmos();
-            switch (maxDepth % 6) {
-                case 0:
-                    Gizmos.color = Color.yellow;
-                    break;
-                case 1:
-                    Gizmos.color = Color.red;
-                    break;
-                case 2:
-                    Gizmos.color = Color.blue;
-                    break;
-                case 3:
-                    Gizmos.color = Color.cyan;
-                    break;
-                case 4:
-                    Gizmos.color = Color.black;
-                    break;
-                case 5:
-                    Gizmos.color = Color.white;
-                    break;
-            }
-            //Vector2 br = new Vector2(boundsMax.x, boundsMin.y);
-            //Vector2 tl = new Vector2(boundsMin.x, boundsMax.y);
+            //switch (maxDepth % 6) {
+            //    case 0:
+            //        Gizmos.color = Color.yellow;
+            //        break;
+            //    case 1:
+            //        Gizmos.color = Color.red;
+            //        break;
+            //    case 2:
+            Gizmos.color = Color.blue;
+            //        break;
+            //    case 3:
+            //        Gizmos.color = Color.cyan;
+            //        break;
+            //    case 4:
+            //        Gizmos.color = Color.black;
+            //        break;
+            //    case 5:
+            //        Gizmos.color = Color.white;
+            //        break;
+            //}
+            Vector2 br = new Vector2(boundsMax.x, boundsMin.y);
+            Vector2 tl = new Vector2(boundsMin.x, boundsMax.y);
 
-            //Gizmos.DrawLine(boundsMax, br);
-            //Gizmos.DrawLine(br, boundsMin);
-            //Gizmos.DrawLine(boundsMin, tl);
-            //Gizmos.DrawLine(tl, boundsMax);
-            Gizmos.DrawLine(
-                new Vector2((min.x + max.x) / 2, min.y),
-                new Vector2((min.x + max.x) / 2, max.y));
-
-            Gizmos.DrawLine(
-                new Vector2(min.x, (min.y + max.y) / 2),
-                new Vector2(max.x, (min.y + max.y) / 2));
-
+            Gizmos.DrawLine(boundsMax, br);
+            Gizmos.DrawLine(br, boundsMin);
+            Gizmos.DrawLine(boundsMin, tl);
+            Gizmos.DrawLine(tl, boundsMax);
         }
 
         static bool Overlap(Vector2 mina, Vector2 maxa, Vector2 minb, Vector2 maxb) {
