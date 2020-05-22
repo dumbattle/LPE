@@ -241,7 +241,6 @@ namespace LPE2D {
         }
 
         public void GetOverlap(IShape2D s, List<T> results) {
-            results = results ?? new List<T>();
             if (_shapes.Count == 0) {
                 return;
             }

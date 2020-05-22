@@ -24,8 +24,7 @@ public class Main : MonoBehaviour {
     public GameObject target;
     public static GameObject Target => main.target;
     Astroid[] astroids;
-    QuadTree<IShape2D> qt;
-    List<IShape2D> shapes;
+
     void Start() {
         //qt = new QuadTree<IShape2D>(new AABB(new Vector2(-10, -10), new Vector2(10, 10)), 7, 1);
         //shapes = new List<IShape2D>();
@@ -48,8 +47,6 @@ public class Main : MonoBehaviour {
             astroids[i] = new Astroid();
             sm.AddShape(astroids[i]);
         }
-
-
     }
 
     private void Update() {

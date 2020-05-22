@@ -10,7 +10,7 @@ namespace LPE2D {
         public static LooseQuadTreePartion<IShape2D> partionRoot;
 
         public ShapeManager(Vector2 mapSize) {
-            partionRoot = new QuadTreePartion<IShape2D>();
+            partionRoot = new LooseQuadTreePartion<IShape2D>();
             partionRoot.Initialize(mapSize / -2, mapSize / 2, 7, 5);
             obstacle = new RectangleShape(43f, 43f) {
                 position = Vector2.zero
