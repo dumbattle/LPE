@@ -14,7 +14,6 @@ namespace LPE.Graph {
 
 
         public GraphEdge<T> AddConnection(GraphNode<T> other, bool directed) {
-
             GraphEdge<T> e = new GraphEdge<T>(this, other) {
                 directed = directed
             };
@@ -31,7 +30,15 @@ namespace LPE.Graph {
             return e;
         }
 
+        public bool IsConnected(GraphNode<T> n) {
+            if (_connections.ContainsKey(n)) {
+                var c = _connections[n];
 
+                return c.type == ConnectionType.away || c.type == ConnectionType.nonDirected;
+            }
+
+            return false;
+        }
 
         public IEnumerable<GraphNode<T>> NextNodes() {
             foreach (var c in _connections) {
@@ -107,7 +114,6 @@ namespace LPE.Graph {
 
             return -1;
         }
-
         /// <summary>
         /// returns list of all nodes that can be reached, including itself
         /// </summary>
