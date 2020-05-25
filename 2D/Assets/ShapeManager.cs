@@ -11,20 +11,19 @@ namespace LPE2D {
 
         public ShapeManager(Vector2 mapSize) {
             partionRoot = new LooseQuadTreePartion<IShape2D>();
-            partionRoot.Initialize(mapSize / -2, mapSize / 2, 7, 5);
+            partionRoot.Initialize(mapSize / -2, mapSize / 2, 7, 1);
             obstacle = new RectangleShape(43f, 43f) {
                 position = Vector2.zero
             };
             ShapeManager.partionRoot.AddShape(obstacle);
-        }
 
+        }
         public void OnDrawGizmos() {
             Gizmos.color = Color.white;
             partionRoot.OnDrawGizmos();
 
             Gizmos.color = Color.green;
             obstacle.shape.OnDrawGizmos();
-
 
             foreach (var s in _shapes) {
                 Gizmos.color = partionRoot.IsColliding(s) ? Color.red : Color.green;

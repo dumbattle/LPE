@@ -17,6 +17,7 @@ namespace LPE2D {
 
 
         public bool leaf => q1 == null;
+        public int count => _shapes.Count;
 
         public Vector2 min { get; private set; }
         public Vector2 max { get; private set; }
@@ -28,7 +29,6 @@ namespace LPE2D {
         int maxOccupants = 1;
 
         HashSet<T> _shapes = new HashSet<T>();
-
 
         public LooseQuadTreePartion() { }
 
@@ -323,26 +323,9 @@ namespace LPE2D {
             q2?.OnDrawGizmos();
             q3?.OnDrawGizmos();
             q4?.OnDrawGizmos();
-            //switch (maxDepth % 6) {
-            //    case 0:
-            //        Gizmos.color = Color.yellow;
-            //        break;
-            //    case 1:
-            //        Gizmos.color = Color.red;
-            //        break;
-            //    case 2:
+
             Gizmos.color = Color.blue;
-            //        break;
-            //    case 3:
-            //        Gizmos.color = Color.cyan;
-            //        break;
-            //    case 4:
-            //        Gizmos.color = Color.black;
-            //        break;
-            //    case 5:
-            //        Gizmos.color = Color.white;
-            //        break;
-            //}
+
             Vector2 br = new Vector2(boundsMax.x, boundsMin.y);
             Vector2 tl = new Vector2(boundsMin.x, boundsMax.y);
 
@@ -367,11 +350,6 @@ namespace LPE2D {
         }
 
         static bool Overlap(Vector2 min, Vector2 max, Vector2 p) {
-            //bool result = 
-            //    !(mina.x > maxb.x ||
-            //    mina.y > maxb.y ||
-            //    maxa.x < minb.x ||
-            //    maxa.y < minb.y);
             bool result =
                 min.x <= p.x &&
                 min.y <= p.y &&

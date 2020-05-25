@@ -264,3 +264,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40201eeb294f92d4f9c60ed17fd24fca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  numWalls: 5
+  mapRadius: 10
+  orientation: 0

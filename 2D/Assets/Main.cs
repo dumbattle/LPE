@@ -45,7 +45,7 @@ public class Main : MonoBehaviour {
         astroids = new Astroid[numAstroids];
         for (int i = 0; i < numAstroids; i++) {
             astroids[i] = new Astroid();
-            sm.AddShape(astroids[i]);
+            //sm.AddShape(astroids[i]);
         }
     }
 
