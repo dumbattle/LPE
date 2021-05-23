@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
-
+using LPE.Math;
 
 namespace LPE.Triangulation {
     public static partial class DelaunayExtensions {
@@ -41,16 +41,16 @@ namespace LPE.Triangulation {
                 }
 
                 // in start triangle?
-                if (e.t1 != null && Utility.InTriangle(v, e.t1.v1.pos, e.t1.v2.pos, e.t1.v3.pos)) {
+                if (e.t1 != null && Geometry.InTriangle(v, e.t1.v1.pos, e.t1.v2.pos, e.t1.v3.pos)) {
                     return e.t1;
                 }
-                if (e.t2 != null && Utility.InTriangle(v, e.t2.v1.pos, e.t2.v2.pos, e.t2.v3.pos)) {
+                if (e.t2 != null && Geometry.InTriangle(v, e.t2.v1.pos, e.t2.v2.pos, e.t2.v3.pos)) {
                     return e.t2;
                 }
 
                 // edge is on path?
                 var vother = e.v1 == startV ? e.v2 : e.v1;
-                if (Utility.OnSegment(vother.pos, startV.pos, v)) {
+                if (Geometry.OnSegment(vother.pos, startV.pos, v)) {
                     // restart using other vertex
                     return d.Point2Triangle(v, vother);
                 }
@@ -82,14 +82,14 @@ namespace LPE.Triangulation {
 
                 if (inter == null) {
                     // inside?
-                    if (Utility.InTriangle(v, t.v1.pos, t.v2.pos, t.v3.pos)) {
+                    if (Geometry.InTriangle(v, t.v1.pos, t.v2.pos, t.v3.pos)) {
                         return t;
                     }
 
                     // does walk path intersect a vertex?
-                    var nv = Utility.OnSegment(t.v1.pos, startV.pos, v) ? t.v1 :
-                             Utility.OnSegment(t.v2.pos, startV.pos, v) ? t.v2 :
-                             Utility.OnSegment(t.v3.pos, startV.pos, v) ? t.v3 : null;
+                    var nv = Geometry.OnSegment(t.v1.pos, startV.pos, v) ? t.v1 :
+                             Geometry.OnSegment(t.v2.pos, startV.pos, v) ? t.v2 :
+                             Geometry.OnSegment(t.v3.pos, startV.pos, v) ? t.v3 : null;
 
                  
                     if (nv != null) {
@@ -111,7 +111,7 @@ namespace LPE.Triangulation {
                 }
                 DelaunayEdge ra = null;
                 DelaunayEdge rb = null;
-                if (Utility.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, startV.pos, v)) {
+                if (Geometry.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, startV.pos, v)) {
                     rb = t.e1;
                 }
                 if (ra == null) {
@@ -119,14 +119,14 @@ namespace LPE.Triangulation {
                     rb = null;
                 }
 
-                if (Utility.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, startV.pos, v)) {
+                if (Geometry.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, startV.pos, v)) {
                     rb = t.e2;
                 }
                 if (ra == null) {
                     ra = rb;
                     rb = null;
                 }
-                if (Utility.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, startV.pos, v)) {
+                if (Geometry.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, startV.pos, v)) {
                     rb = t.e3;
                 }
                 if (ra == null) {
@@ -269,7 +269,7 @@ namespace LPE.Triangulation {
             var pa = a;
             var pb = b;
 
-            var ra = Utility.IsClockwise(s, a.pos, b.pos);
+            var ra = Geometry.IsClockwise(s, a.pos, b.pos);
             var rb = !ra;
 
             var safety = new LoopSafety(1000);
@@ -297,12 +297,12 @@ namespace LPE.Triangulation {
                     //advance b
 
                     // wrong way
-                    if (Utility.IsClockwise(s, b.pos, vnext.pos) != rb) {
+                    if (Geometry.IsClockwise(s, b.pos, vnext.pos) != rb) {
                         continue;
                     }
 
                     // crossover
-                    if (Utility.IsClockwise(s, vnext.pos, a.pos) != rb) {
+                    if (Geometry.IsClockwise(s, vnext.pos, a.pos) != rb) {
                         s = a.pos;
                         result.Add(s);
                         en = portals.Last;
@@ -322,7 +322,7 @@ namespace LPE.Triangulation {
                         b = p.v2;
                         pa = a;
                         pb = b;
-                        ra = Utility.IsClockwise(s, a.pos, b.pos);
+                        ra = Geometry.IsClockwise(s, a.pos, b.pos);
                         rb = !ra;
                         continue;
                     }
@@ -331,7 +331,7 @@ namespace LPE.Triangulation {
                 else {
                     pa = vnext;
                     //advance a
-                    var ra2 = Utility.IsClockwise(s, a.pos, vnext.pos);
+                    var ra2 = Geometry.IsClockwise(s, a.pos, vnext.pos);
 
                     // wrong way
                     if (ra2 != ra) {
@@ -339,7 +339,7 @@ namespace LPE.Triangulation {
                     }
 
                     // crossover
-                    var rs = Utility.IsClockwise(s, vnext.pos, b.pos);
+                    var rs = Geometry.IsClockwise(s, vnext.pos, b.pos);
                     if (rs != ra) {
                         s = b.pos;
                         result.Add(s);
@@ -361,7 +361,7 @@ namespace LPE.Triangulation {
                         b = p.v2;
                         pa = a;
                         pb = b;
-                        ra = Utility.IsClockwise(s, a.pos, b.pos);
+                        ra = Geometry.IsClockwise(s, a.pos, b.pos);
                         rb = !ra;
                         continue;
                     }
@@ -373,12 +373,12 @@ namespace LPE.Triangulation {
             // one more iteration with end
             //advance b
             // wrong way
-            if (Utility.IsClockwise(s, b.pos, end) != rb) {
+            if (Geometry.IsClockwise(s, b.pos, end) != rb) {
                 result.Add(b.pos);
             }
 
             // crossover
-            if (Utility.IsClockwise(s, end, a.pos) != rb) {
+            if (Geometry.IsClockwise(s, end, a.pos) != rb) {
                 result.Add(a.pos);
             }
 

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using LPE.Math;
 
 namespace LPE.Triangulation {
     public class Delaunay {
@@ -109,7 +110,7 @@ namespace LPE.Triangulation {
 
                     // edge is part of the constraint?
                     var vother = e.v1 == v1 ? e.v2 : e.v1;
-                    if (Utility.OnSegment(vother.pos, v1.pos, v2.pos)) {
+                    if (Geometry.OnSegment(vother.pos, v1.pos, v2.pos)) {
                         e.IsConstraint = true;
                         // restart using other vertex
                         AddConstraints(vother.pos, v2.pos);
@@ -141,10 +142,9 @@ namespace LPE.Triangulation {
 
                     if (inter == null && e1.v1 != v2 && e1.v2 != v2) {
                         // does walk path intersect a vertex?
-                        var nv = Utility.OnSegment(t.v1.pos, v1.pos, v2.pos) ? t.v1 :
-                                 Utility.OnSegment(t.v2.pos, v1.pos, v2.pos) ? t.v2 :
-                                 Utility.OnSegment(t.v3.pos, v1.pos, v2.pos) ? t.v3 : null;
-                         
+                        var nv = Geometry.OnSegment(t.v1.pos, v1.pos, v2.pos) ? t.v1 :
+                                 Geometry.OnSegment(t.v2.pos, v1.pos, v2.pos) ? t.v2 :
+                                 Geometry.OnSegment(t.v3.pos, v1.pos, v2.pos) ? t.v3 : null;
                         if (nv != null) {
                             // split constraint into 2
                             newConstraints = newConstraints ?? new List<Vector2>();
@@ -176,7 +176,7 @@ namespace LPE.Triangulation {
                         continue;
                     }
 
-                    if (Utility.IsIntersecting(e.v1.pos, e.v2.pos, v1.pos, v2.pos)) {
+                    if (Geometry.IsIntersecting(e.v1.pos, e.v2.pos, v1.pos, v2.pos)) {
                         intersect.Enqueue(e);
                     }
                     else {
@@ -217,7 +217,7 @@ namespace LPE.Triangulation {
                 (DelaunayEdge a, DelaunayEdge b) GetIntersecting(DelaunayTriangle t, DelaunayVertex a, DelaunayVertex b) {
                     DelaunayEdge ra = null;
                     DelaunayEdge rb = null;
-                    if (Utility.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, a.pos, b.pos)) {
+                    if (Geometry.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, a.pos, b.pos)) {
                         rb = t.e1;
                     }
                     if (ra == null) {
@@ -225,14 +225,14 @@ namespace LPE.Triangulation {
                         rb = null;
                     }
 
-                    if (Utility.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, a.pos, b.pos)) {
+                    if (Geometry.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, a.pos, b.pos)) {
                         rb = t.e2;
                     }
                     if (ra == null) {
                         ra = rb;
                         rb = null;
                     }
-                    if (Utility.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, a.pos, b.pos)) {
+                    if (Geometry.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, a.pos, b.pos)) {
                         rb = t.e3;
                     }
                     if (ra == null) {
@@ -372,7 +372,7 @@ namespace LPE.Triangulation {
                                 continue;
                             }
 
-                            if(Utility.RaySegment(v2.pos, d.pos - v2.pos, v1.pos, v3.pos)) {
+                            if(Geometry.RaySegment(v2.pos, d.pos - v2.pos, v1.pos, v3.pos)) {
                                 valid = false;
                                 break;
                             }
@@ -391,7 +391,7 @@ namespace LPE.Triangulation {
                             }
                             var vert = orderedVerts[j];
 
-                            if (Utility.InCircumcircle(vert.pos, v1.pos, v2.pos, v3.pos)) {
+                            if (Geometry.InCircumcircle(vert.pos, v1.pos, v2.pos, v3.pos)) {
                                 valid = false;
                                 break;
                             }
@@ -601,7 +601,7 @@ namespace LPE.Triangulation {
             (DelaunayEdge a, DelaunayEdge b) GetIntersecting (DelaunayTriangle t) {
                 DelaunayEdge ra = null;
                 DelaunayEdge rb = null;
-                if (Utility.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, a.pos, b.pos)) {
+                if (Geometry.IsIntersecting(t.e1.v1.pos, t.e1.v2.pos, a.pos, b.pos)) {
                     rb = t.e1;
                 }
                 if (ra == null) {
@@ -609,14 +609,14 @@ namespace LPE.Triangulation {
                     rb = null;
                 }
 
-                if (Utility.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, a.pos, b.pos)) {
+                if (Geometry.IsIntersecting(t.e2.v1.pos, t.e2.v2.pos, a.pos, b.pos)) {
                     rb = t.e2;
                 }
                 if (ra == null) {
                     ra = rb;
                     rb = null;
                 }
-                if (Utility.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, a.pos, b.pos)) {
+                if (Geometry.IsIntersecting(t.e3.v1.pos, t.e3.v2.pos, a.pos, b.pos)) {
                     rb = t.e3;
                 }
                 if (ra == null) {
