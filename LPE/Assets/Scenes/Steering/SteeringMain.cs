@@ -47,7 +47,7 @@ public class SteeringMain : MonoBehaviour {
             agents.Add(new SteerAgent() {
                 pos = Random.insideUnitCircle * i / 10f,
                 dir = new Vector2(0, 0),
-                size = 1f
+                size = .2f
             });
 
         }
