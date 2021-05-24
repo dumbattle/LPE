@@ -215,7 +215,7 @@ MonoBehaviour:
   target: {fileID: 237591709}
   dir: {fileID: 907092747}
   start: {fileID: 1538592854}
-  numAgents: 250
+  numAgents: 500
 --- !u!4 &1176979144
 Transform:
   m_ObjectHideFlags: 0

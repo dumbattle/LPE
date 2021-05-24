@@ -20,7 +20,7 @@ namespace LPE.Steering {
 
             dir =
                 dir.normalized +
-                Seperation(agent, nearby, 1.5f) * 4;
+                Seperation(agent, nearby, 3f) * 4;
       
             return dir.normalized;
         }
@@ -34,25 +34,27 @@ namespace LPE.Steering {
                     continue;
                 }
                 var dir = other.pos - agent.pos;
-                var sep = agent.size * sepScale;
-                float minRad = sep + other.size;
+                var sep = Mathf.Max(agent.size, other.size) * sepScale;
+                float minRad = sep + Mathf.Min(agent.size, other.size); 
 
+              
+
+                var dist = dir.magnitude;
+                var scale = (dist) / minRad;
                 //too far
-                if (dir.sqrMagnitude > minRad * minRad) {
+                if (scale > 1) {
                     continue;
                 }
 
-                var dist = dir.magnitude;
-                var scale = (dist - other.size) / minRad;
-
-                if (Mathf.Approximately(dist, 0)) {
+                if (Mathf.Approximately(scale, 0)) {
                     // on same spot -> rand direction
                     dir = Random.insideUnitCircle;
-
                 }
+
                 dir = dir.normalized;
+                scale = Mathf.Lerp(1, 0, scale * scale);
                 // correction
-                var cv = dir * Mathf.Lerp(1, 0, scale);
+                var cv = dir * scale;
                 result -= cv;
 
 

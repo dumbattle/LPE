@@ -45,8 +45,9 @@ public class SteeringMain : MonoBehaviour {
 
         for (int i = 0; i < numAgents; i++) {
             agents.Add(new SteerAgent() {
+                pos = Random.insideUnitCircle * i / 10f,
                 dir = new Vector2(0, 0),
-                size = .2f
+                size = 1f
             });
 
         }
@@ -63,28 +64,28 @@ public class SteeringMain : MonoBehaviour {
             }
             var s = Steering.Basic(tar, a, agents);
 
-            a.dir = Vector2.ClampMagnitude(s, .03f);
+            a.dir = Vector2.ClampMagnitude(s, .1f);
 
 
             // don't walk into other agents
-            float t = 1;
+            //float t = 1;
 
-            foreach (var other in agents) {
-                if (other == a) {
-                    continue;
-                }
-                // sphere cast in direction
-                var tt = LPE.Math.Geometry.CircleCast_Circle(a.pos, a.size, other.pos, other.size, a.dir);
+            //foreach (var other in agents) {
+            //    if (other == a) {
+            //        continue;
+            //    }
+            //    // sphere cast in direction
+            //    var tt = LPE.Math.Geometry.CircleCast_Circle(a.pos, a.size, other.pos, other.size, a.dir);
 
-                // shorten dir
-                if (tt >= 0 && tt < t) {
-                    t = tt;
-                }
-            }
+            //    // shorten dir
+            //    if (tt >= 0 && tt < t) {
+            //        t = tt;
+            //    }
+            //}
 
-            if (t < 1) {
-                a.dir *= t;
-            }
+            //if (t < 1) {
+            //    a.dir *= t;
+            //}
 
             a.pos += a.dir;
         }
