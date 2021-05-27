@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 namespace LPE.Math {
     public static partial class Geometry {
-        public static bool RaySegment(Vector2 o, Vector2 d, Vector2 a, Vector2 b) {
+        public static bool IsRaySegment(Vector2 o, Vector2 d, Vector2 a, Vector2 b) {
             Vector2 v1 = o - a;
             Vector2 v2 = b - a;
             Vector2 v3 = new Vector2(-d.y, d.x);
@@ -19,7 +19,27 @@ namespace LPE.Math {
 
             return false;
         }
+        public static bool IsColinear(Vector2 p, Vector2 a, Vector2 b) {
+            if (a == b) {
+                return true;
+            }
+            if (a == p || p == b) {
+                return true;
+            }
 
+            // verticals
+            if (Mathf.Abs(b.x - a.x) <= 0.0001f) {
+                return Mathf.Abs(p.x - a.x) <= 0.0001f;
+            }
+
+            // check slopes
+            if (!Mathf.Approximately((b.y - a.y) * (p.x - a.x), (p.y - a.y) * (b.x - a.x))) {
+                return false;
+            }
+
+            return true;
+
+        }
         public static bool OnSegment(Vector2 p, Vector2 a, Vector2 b) {
             if (a == b) {
                 return false;
@@ -152,6 +172,30 @@ namespace LPE.Math {
             int Sign(double d) {
                 return d >= 0 ? 1 : -1;
             }
+        }
+    
+    
+        public static bool AABBIntersection(Vector2 amin, Vector2 amax, Vector2 bmin, Vector2 bmax) {
+            return
+                amin.x < bmax.x &&
+                amax.x > bmin.x &&
+                amin.y < bmax.y &&
+                amax.y > bmin.y;
+        }
+    
+        public static (Vector2 a, Vector2 b)ShortenSegment(Vector2 a, Vector2 b, float amnt) {
+            if (amnt == 0) {
+                return (a, b);
+            }
+            var dir = (b - a).normalized * amnt;
+            return (a + dir, b - dir);
+        }
+   
+        public static (Vector2 min, Vector2 max) CircleAABB(Vector2 pos, float r) {
+            return (
+                pos - new Vector2(r,r),
+                pos + new Vector2(r,r)
+                );
         }
     }
 }

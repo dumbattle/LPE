@@ -5,10 +5,12 @@ using LPE.Triangulation;
 
 
 public class TriangulationMain : MonoBehaviour {
-    public Vector2Int size;
     public GameObject pointer;
+    public GameObject start;
+    public GameObject end;
     public GameObject bounds;
     public GameObject[] objects;
+    public Vector2Int size;
     Delaunay d;
     List<DelaunayTriangle> path;
     List<Vector2> p;
@@ -65,15 +67,17 @@ public class TriangulationMain : MonoBehaviour {
                 con.Add(new Vector2(x1, y1));
             }
         }
+       
+        
         d.AddPoints(points);
         d.AddConstraints(con);
         var b = GetRect(bounds);
-        var start = new Vector2(b.x1 + 1, b.y1 + 1);
-        var end = new Vector2(b.x2 - 1, b.y2 - 1);
 
-        path = d.AStar(start, end);
-        p = DelaunayExtensions.Funnel(path, start, end);
+        path = d.AStar(start.transform.position, end.transform.position);
+        if (path != null) {
+            p = DelaunayAlgorithms.Funnel(path, start.transform.position, end.transform.position);
 
+        }
 
     }
 
@@ -159,7 +163,7 @@ public class TriangulationMain : MonoBehaviour {
     }
 
     void DrawPath() {
-        if (d == null) {
+        if (p == null) {
             return;
         }
 

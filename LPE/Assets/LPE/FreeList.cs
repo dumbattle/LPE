@@ -4,7 +4,14 @@ using UnityEngine;
 
 namespace LPE {
     public class FreeList<T>  {
-        public T this[int i] => _data[i].value;
+        public T this[int i] {
+            get {
+                return _data[i].value;
+            }
+            set {
+                _data[i] = (-1, value);
+            }
+        }
 
         List<(int next, T value)> _data = new List<(int next, T value)>();
         int _firstFree = -1;

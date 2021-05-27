@@ -5,6 +5,7 @@ using LPE.Math;
 
 namespace LPE.Triangulation {
     public static partial class DelaunayExtensions {
+        static Unity.Profiling.ProfilerMarker pm = new Unity.Profiling.ProfilerMarker("test");
         static void print(object o) {
             Debug.Log(o);
         }
@@ -63,9 +64,8 @@ namespace LPE.Triangulation {
             }
 
             // walk
-            var safety = new LoopSafety(100000);
 
-            while (safety.Inc()) {
+            while (true) {
                 // flip triangle
                 var t1 = inter.t1;
                 var t2 = inter.t2;
@@ -138,82 +138,84 @@ namespace LPE.Triangulation {
             }
             return null;
         }
-    
 
-        public static List<DelaunayTriangle> AStar(this Delaunay d, Vector2 start, Vector2 end, float radius = 0) {
+        static PriorityQueue<DelaunayTriangle> queue = new PriorityQueue<DelaunayTriangle>();
+        static Dictionary<DelaunayTriangle, AStarCache> cache = new Dictionary<DelaunayTriangle, AStarCache>();
+        public static List<DelaunayTriangle> AStar(this Delaunay d, Vector2 start, Vector2 end, List<DelaunayTriangle> result = null, float radius = 0) {
             float seDist = (start - end).magnitude;
             DelaunayTriangle tstart = d.Point2Triangle(start);
             DelaunayTriangle tend = d.Point2Triangle(end);
-            DelaunayTriangle closest = null;
-            var closeDist = Mathf.Infinity;
-            PriorityQueue<DelaunayTriangle> queue = new PriorityQueue<DelaunayTriangle>();
-            Dictionary<DelaunayTriangle, AStarCache> cache = new Dictionary<DelaunayTriangle, AStarCache>();
-            List<DelaunayTriangle> result = new List<DelaunayTriangle>();
+            result = result ?? new List<DelaunayTriangle>();
+            if (tstart == tend) {
+                result.Add(tstart);
 
-            cache.Add(tstart, new AStarCache());
-            cache.Add(tend, new AStarCache());
+                return result;
+            }
+            queue.Clear();
+            cache.Clear();
+
+            cache.Add(tstart, AStarCache.Get());
+            cache.Add(tend, AStarCache.Get());
             var cs = cache[tstart];
             var ce = cache[tend];
             cs.g = 0;
             cs.h = seDist;
             cs.start = true;
             cs.startPos = start;
-
             queue.Add(tstart, 0);
-            var safety = new LoopSafety(100);
-
-            while (!queue.isEmpty && safety) {
+            while (!queue.isEmpty) {
                 var t = queue.Get();
                 var ct = cache[t];
                 if (t == tend) {
-                    BackTrack(tend, result, cache);
-                    var f = Funnel(result, start, end);
-                    ce.g = PathLength(f);
                     break;
                 }
-                if (ct.h < closeDist) {
-                    closest = t;
-                    closeDist = ct.h;
-                }
-                //if (ct.f > ce.g) {
-                //    break;
-                //}
 
                 var t1 = t.e1.t1 == t ? t.e1.t2 : t.e1.t1;
                 var t2 = t.e2.t1 == t ? t.e2.t2 : t.e2.t1;
                 var t3 = t.e3.t1 == t ? t.e3.t2 : t.e3.t1;
-
-                CheckNeighbor(t1, t.e1);
-                CheckNeighbor(t2, t.e2);
-                CheckNeighbor(t3, t.e3);
-
+                if (ct.entry != t.e1) CheckNeighbor(t1, t.e1);
+                if (ct.entry != t.e2) CheckNeighbor(t2, t.e2);
+                if (ct.entry != t.e3) CheckNeighbor(t3, t.e3);
                 void CheckNeighbor(DelaunayTriangle n, DelaunayEdge e) {
                     // don't cross constraints
                     if (e.IsConstraint) {
                         return;
                     }
                     // too small
-                    if ((e.v1.pos - e.v2.pos).sqrMagnitude < radius * radius) {
+                    Vector2 v1 = e.v1.pos;
+                    Vector2 v2 = e.v2.pos;
+                    if ((v1 - v2).sqrMagnitude < radius * radius) {
                         return;
                     }
                     // out of bounds
                     if (n==null) {
                         return;
                     }
-
-                    // update g
                     if (!cache.ContainsKey(n)) {
-                        cache.Add(n, new AStarCache());
-                        cache[n].h = Mathf.Sqrt(Mathf.Min((end - e.v1.pos).sqrMagnitude, (end - e.v2.pos).sqrMagnitude));
-
+                        cache.Add(n, AStarCache.Get());
+                        cache[n].h = Mathf.Sqrt(Mathf.Min((end - v1).sqrMagnitude, (end - v2).sqrMagnitude));
                     }
+
                     var c = cache[n];
-                    float gg = Mathf.Max(
-                        Mathf.Sqrt(Mathf.Min((start - e.v1.pos).sqrMagnitude, (start - e.v2.pos).sqrMagnitude)),
-                        seDist - c.h,
-                        ct.g + ct.h - c.h,
-                        ct.g + ct.DistToEdge(e)
-                    );
+
+                    // estimate g
+                    float gg = Mathf.Sqrt(Mathf.Min((start - v1).sqrMagnitude, (start - v2).sqrMagnitude));
+                    float a = seDist - c.h;
+
+
+                    if (a > gg) {
+                        gg =a;
+                    }
+
+                    a = ct.f - c.h;
+                    if (a > gg) {
+                        gg = a;
+                    }
+
+                    a = ct.g;
+                    if (a > gg) {
+                        gg = a;
+                    }
 
                     if (gg < c.g) {
                         c.prev = t;
@@ -226,17 +228,21 @@ namespace LPE.Triangulation {
 
 
             if (ce.prev == null) {
-                tend = closest;
+                return null;
             }
 
-         
+
             BackTrack(tend, result, cache);
+
+            foreach (var kv in cache) {
+                AStarCache.Return(kv.Value);
+            }
+            cache.Clear();
             return result;
-             
+
             static void BackTrack(DelaunayTriangle t, List<DelaunayTriangle> output, Dictionary<DelaunayTriangle, AStarCache> cache) {
-                var safety = new LoopSafety(100);
                 output.Clear();
-                while (safety && (t != null)) {
+                while (t != null) {
                     output.Add(t);
                     t = cache[t].prev;
                 }
@@ -246,147 +252,6 @@ namespace LPE.Triangulation {
         }
 
 
-        public static List<Vector2> Funnel(List<DelaunayTriangle> channel, Vector2 start, Vector2 end) {
-            List<Vector2> result = new List<Vector2>();
-            LinkedList<DelaunayEdge> portals = new LinkedList<DelaunayEdge>();
-            for (int i = 0; i < channel.Count - 1; i++) {
-                DelaunayTriangle t1 = channel[i];
-                DelaunayTriangle t2 = channel[i + 1];
-                portals.AddLast(
-                    t1.e1 == t2.e1 || t1.e1 == t2.e2 || t1.e1 == t2.e3 ? t1.e1 :
-                    t1.e2 == t2.e1 || t1.e2 == t2.e2 || t1.e2 == t2.e3 ? t1.e2 :
-                    t1.e3 == t2.e1 || t1.e3 == t2.e2 || t1.e3 == t2.e3 ? t1.e3 : null);
-            }
-
-            result.Add(start);
-
-            var en = portals.First;
-
-            var p = en.Value;
-            var s = start;
-            var a = p.v1;
-            var b = p.v2;
-            var pa = a;
-            var pb = b;
-
-            var ra = Geometry.IsClockwise(s, a.pos, b.pos);
-            var rb = !ra;
-
-            var safety = new LoopSafety(1000);
-
-            while (en != null && safety) {
-                en = en.Next;
-                if (en == null) {
-                    break;
-                }
-                p = en.Value;
-
-                var aSide = pa == p.v1 || pa == p.v2;
-
-                var vnext = 
-                    aSide 
-                    ? p.v1 == pa 
-                        ? p.v2 
-                        : p.v1
-                    : p.v1 == pb 
-                        ? p.v2 
-                        : p.v1;
-
-                if (aSide) {
-                    pb = vnext;
-                    //advance b
-
-                    // wrong way
-                    if (Geometry.IsClockwise(s, b.pos, vnext.pos) != rb) {
-                        continue;
-                    }
-
-                    // crossover
-                    if (Geometry.IsClockwise(s, vnext.pos, a.pos) != rb) {
-                        s = a.pos;
-                        result.Add(s);
-                        en = portals.Last;
-
-                        while (en!= null) {
-                            if (en.Value.v1 == a || en.Value.v2 == a) {
-                                en = en.Next;
-                                break;
-                            }
-                            en = en.Previous;
-                        }
-                        if (en == null) {
-                            break;
-                        }
-                        p = en.Value;
-                        a = p.v1;
-                        b = p.v2;
-                        pa = a;
-                        pb = b;
-                        ra = Geometry.IsClockwise(s, a.pos, b.pos);
-                        rb = !ra;
-                        continue;
-                    }
-                    b = vnext;
-                }
-                else {
-                    pa = vnext;
-                    //advance a
-                    var ra2 = Geometry.IsClockwise(s, a.pos, vnext.pos);
-
-                    // wrong way
-                    if (ra2 != ra) {
-                        continue;
-                    }
-
-                    // crossover
-                    var rs = Geometry.IsClockwise(s, vnext.pos, b.pos);
-                    if (rs != ra) {
-                        s = b.pos;
-                        result.Add(s);
-
-                        en = portals.Last;
-
-                        while (en != null) {
-                            if (en.Value.v1 == b || en.Value.v2 == b) {
-                                en = en.Next;
-                                break;
-                            }
-                            en = en.Previous;
-                        }
-                        if (en  == null) {
-                            break;
-                        }
-                        p = en.Value;
-                        a = p.v1;
-                        b = p.v2;
-                        pa = a;
-                        pb = b;
-                        ra = Geometry.IsClockwise(s, a.pos, b.pos);
-                        rb = !ra;
-                        continue;
-                    }
-                    a = vnext;
-                }
-
-            }
-
-            // one more iteration with end
-            //advance b
-            // wrong way
-            if (Geometry.IsClockwise(s, b.pos, end) != rb) {
-                result.Add(b.pos);
-            }
-
-            // crossover
-            if (Geometry.IsClockwise(s, end, a.pos) != rb) {
-                result.Add(a.pos);
-            }
-
-            result.Add(end);
-            return result;
-
-        }
-
         public static float PathLength(List<Vector2> p) {
             float result = 0;
             for (int i = 0; i < p.Count - 1; i++) {
@@ -394,7 +259,11 @@ namespace LPE.Triangulation {
             }
             return result;
         }
+        
         class AStarCache {
+            static ObjectPool<AStarCache> _pool = new ObjectPool<AStarCache>(() => new AStarCache());
+            public static AStarCache Get() { var result = _pool.Get(); result.Init(); return result; }
+            public static void Return(AStarCache asc) => _pool.Return(asc);
             public DelaunayTriangle prev;
             public DelaunayEdge entry;
             /// <summary>
@@ -413,23 +282,48 @@ namespace LPE.Triangulation {
             public bool start = false;
             public Vector2 startPos;
 
+            private AStarCache() { }
+            void Init() {
+                prev = null;
+                entry = null;
+                g = Mathf.Infinity;
+                h = -1;
+                start = false;
+                startPos = new Vector2(0, 0);
+            }
             public float DistToEdge(DelaunayEdge e) {
                 float result = 0;
                 if (start) {
                     result =  Mathf.Sqrt(Mathf.Min((startPos - e.v1.pos).sqrMagnitude, (startPos - e.v2.pos).sqrMagnitude));
                 }
                 else {
+                    var a = Mathf.Min(
+                        (entry.v1.pos - e.v1.pos).sqrMagnitude,
+                        (entry.v1.pos - e.v2.pos).sqrMagnitude);
+                    var b = Mathf.Min(
+                        (entry.v2.pos - e.v1.pos).sqrMagnitude,
+                        (entry.v2.pos - e.v2.pos).sqrMagnitude);
                     result = 
                         Mathf.Sqrt(
                             Mathf.Min(
-                                (entry.v1.pos - e.v1.pos).sqrMagnitude,
-                                (entry.v1.pos - e.v2.pos).sqrMagnitude,
-                                (entry.v2.pos - e.v1.pos).sqrMagnitude,
-                                (entry.v2.pos - e.v2.pos).sqrMagnitude));
+                                a,
+                                b));
                 }
 
                 return result;
             }
         }
+    
+    
+        public static void DrawGizmos(this Delaunay d) {
+            foreach (var t in d.triangles) {
+                if (t.super) {
+                    continue;
+                }
+                Gizmos.DrawLine(t.e1.v1.pos, t.e1.v2.pos);
+                Gizmos.DrawLine(t.e2.v1.pos, t.e2.v2.pos);
+                Gizmos.DrawLine(t.e3.v1.pos, t.e3.v2.pos);
+            }
+        }    
     }
 }

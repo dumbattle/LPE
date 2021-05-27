@@ -4,14 +4,11 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using LPE;
-using System.Linq;
+using LPE.SpacePartition;
 
 public class FreeListTests {
-
     FreeList<int> list;
-
     List<int> data;
-
 
     [Test, Order(0)]
     public void FreeList_Init() {
@@ -58,4 +55,58 @@ public class FreeListTests {
         Assert.IsNotNull(data, "Cannot run test independently");
     }
 
+}
+
+
+public class GridHierarchyTest {
+
+    GridHierarchy<int> grid;
+
+    [Test, Order(0)]
+    public void GridHierarchy_Init() {
+        grid = new GridHierarchy<int>(-Vector2.one, Vector2.one, 1);
+
+    }
+    [Test, Order(1)]
+    public void GridHierarchy_Add() {
+        grid.Add(0, new Vector2(0, 0), new Vector2(1, 1));
+        grid.Add(1, new Vector2(-1, 0), new Vector2(0, 1));
+        grid.Add(2, new Vector2(-1, -1), new Vector2(0, 0));
+        grid.Add(3, new Vector2(0, -1), new Vector2(1, 0));
+    }
+    [Test, Order(2)]
+    public void GridHierarchy_Query() {
+        HashSet<int> items = new HashSet<int>();
+
+
+        grid.Query(new Vector2(-.5f, -.5f), new Vector2(.5f, .5f), (a) => items.Add(a));
+        Assert.True(items.Contains(0));
+        Assert.True(items.Contains(1));
+        Assert.True(items.Contains(2));
+        Assert.True(items.Contains(3));
+
+
+        items.Clear();
+        grid.Query(new Vector2(.1f, .1f), new Vector2(.5f, .5f), (a) => items.Add(a));
+        Assert.True(items.Contains(0));
+        Assert.False(items.Contains(1));
+        Assert.False(items.Contains(2));
+        Assert.False(items.Contains(3));
+
+
+        items.Clear();
+        grid.Query(new Vector2(-.5f, -.5f), new Vector2(-.1f, -.1f), (a) => items.Add(a));
+        Assert.False(items.Contains(0));
+        Assert.False(items.Contains(1));
+        Assert.True(items.Contains(2));
+        Assert.False(items.Contains(3));
+
+
+        items.Clear();
+        grid.Query(new Vector2(-.5f, -.5f), new Vector2(.5f, -.1f), (a) => items.Add(a));
+        Assert.False(items.Contains(0));
+        Assert.False(items.Contains(1));
+        Assert.True(items.Contains(2));
+        Assert.True(items.Contains(3));
+    }
 }
