@@ -1,18 +1,17 @@
 ﻿using UnityEngine;
 using LPE;
 using System.Collections.Generic;
-
 namespace Example.Shooter2D {
     public class Player : Unit {
         public override Vector2 pos => obj.transform.position;
         public override Vector2 dir => _dir;
         public override float size => radius;
-
         Vector2 _dir;
         GameObject obj;
         float radius;
 
-        public Player(GameObject obj, float r) {
+
+        public Player (GameObject obj, float r) {
             this.obj = obj;
             radius = r;
             obj.transform.position = Vector2.zero;
@@ -23,8 +22,8 @@ namespace Example.Shooter2D {
 
         public override void Update() {
             var input = new Vector3(
-                Input.GetAxisRaw("Horizontal"),
-                Input.GetAxisRaw("Vertical")
+                Input.GetAxisRaw("Horizontal"),    
+                Input.GetAxisRaw("Vertical")    
             );
             var spd = .1f;
 
