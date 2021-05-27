@@ -123,7 +123,7 @@ namespace LPE.Triangulation {
 
                 List<Vector2> newConstraints = null;
                 intersect.Clear();
-                while (inter != null && safety) {
+                while (inter != null && safety.Inc()) {
                     if (inter.IsConstraint) {
                         throw new InvalidOperationException($"Overlaping constraints ({inter.v1.pos}, {inter.v2.pos}), ({v1.pos}, {v2.pos})");
                     }
@@ -161,7 +161,7 @@ namespace LPE.Triangulation {
 
                 // flip intersecting edges
                 newEdges.Clear();
-                while (intersect.Count > 0 && safety) {
+                while (intersect.Count > 0 && safety.Inc()) {
                     var e = intersect.Dequeue();
                     //   check if the 2 triangles are convex => if not put at back of queue
                     if (!IsConvex(e.t1, e.t2)) {
@@ -372,7 +372,7 @@ namespace LPE.Triangulation {
                                 continue;
                             }
 
-                            if(Geometry.RaySegment(v2.pos, d.pos - v2.pos, v1.pos, v3.pos)) {
+                            if(Geometry.IsRaySegment(v2.pos, d.pos - v2.pos, v1.pos, v3.pos)) {
                                 valid = false;
                                 break;
                             }
@@ -450,7 +450,7 @@ namespace LPE.Triangulation {
             var n = pl.First;
 
             var safety = new LoopSafety(10000);
-            while (n != null && safety) {
+            while (n != null && safety.Inc()) {
                 var e = n.Value;
                 // stop at constrained edges
                 if (e.IsConstraint) {

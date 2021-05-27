@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace LPE {
     public static partial class LPEExtensions {
@@ -17,6 +18,10 @@ namespace LPE {
         }
         public static int Min(this int f, int maxValue) {
             return f < maxValue ? maxValue : f;
+        }
+
+        public static Vector3 SetZ(this Vector2 v, float z) {
+            return new Vector3(v.x, v.y, z);
         }
     }
 

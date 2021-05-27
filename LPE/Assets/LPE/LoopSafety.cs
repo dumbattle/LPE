@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 namespace LPE {
-    public class LoopSafety {
+    public struct LoopSafety {
         const int THROW = 1;
         const int LOG = 2;
         public bool hitLimit;
@@ -45,8 +45,5 @@ namespace LPE {
             return true;
         }
 
-        public static implicit operator bool(LoopSafety s) {
-            return s.Inc();
-        }
     }
 }

@@ -1,26 +1,21 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using LPE;
-using System.Threading.Tasks;
 using System;
 
-namespace LPE2D {
+namespace LPE.SpacePartition {
+
+
     public class QuadTreePartion<T> where T : class, IShape2D {
         static ObjectPool<QuadTreePartion<T>> partitionPool;
         static QuadTreePartion() {
             partitionPool = new ObjectPool<QuadTreePartion<T>>(() => new QuadTreePartion<T>());
         }
-        
+
         //children
         public QuadTreePartion<T> q1 { get; private set; }
         public QuadTreePartion<T> q2 { get; private set; }
         public QuadTreePartion<T> q3 { get; private set; }
         public QuadTreePartion<T> q4 { get; private set; }
-
-        //public QuadTreePartion<T> bottom { get; private set; }
-        //public QuadTreePartion<T> top { get; private set; }
-        //public QuadTreePartion<T> right { get; private set; }
-        //public QuadTreePartion<T> left { get; private set; }
 
         public bool leaf => q1 == null;
 
@@ -174,7 +169,6 @@ namespace LPE2D {
             return false;
         }
         public void GetOverlap(IShape2D s, List<T> results) {
-            results = results ?? new List<T>();
 
             if (_shapes.Count == 0) {
                 return;
@@ -211,113 +205,6 @@ namespace LPE2D {
                 }
             }
         }
-
-        //public IEnumerable<QuadTreePartion<T>> TopmostNodes() {
-        //    if (leaf) {
-        //        yield return this;
-        //        yield break;
-        //    }
-
-        //    foreach (var p in q1.TopmostNodes()) {
-        //        yield return p;
-        //    }
-        //    foreach (var p in q2.TopmostNodes()) {
-        //        yield return p;
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> BottommostNodes() {
-        //    if (leaf) {
-        //        yield return this;
-        //        yield break;
-        //    }
-
-        //    foreach (var p in q3.BottommostNodes()) {
-        //        yield return p;
-        //    }
-        //    foreach (var p in q4.BottommostNodes()) {
-        //        yield return p;
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> RightmostNodes() {
-        //    if (leaf) {
-        //        yield return this;
-        //        yield break;
-        //    }
-
-        //    foreach (var p in q1.RightmostNodes()) {
-        //        yield return p;
-        //    }
-        //    foreach (var p in q4.RightmostNodes()) {
-        //        yield return p;
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> LeftmostNodes() {
-        //    if (leaf) {
-        //        yield return this;
-        //        yield break;
-        //    }
-
-        //    foreach (var p in q2.LeftmostNodes()) {
-        //        yield return p;
-        //    }
-        //    foreach (var p in q3.LeftmostNodes()) {
-        //        yield return p;
-        //    }
-        //}
-
-        //public IEnumerable<QuadTreePartion<T>> AdjacentTop() {
-        //    if (top != null) {
-        //        foreach (var t in top.BottommostNodes()) {
-        //            if (!(t.min.x >= max.x || t.max.x <= min.x)) {
-        //                yield return t;
-        //            }
-        //        }
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> AdjacentBottom() {
-        //    if (bottom != null) {
-        //        foreach (var t in bottom.TopmostNodes()) {
-        //            if (!(t.min.x >= max.x || t.max.x <= min.x)) {
-        //                yield return t;
-        //            }
-        //        }
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> AdjacentRight() {
-        //    if (right != null) {
-        //        foreach (var t in right.LeftmostNodes()) {
-        //            if (!(t.min.y >= max.y || t.max.y <= min.y)) {
-        //                yield return t;
-        //            }
-        //        }
-        //    }
-        //}
-        //public IEnumerable<QuadTreePartion<T>> Adjacentleft() {
-
-        //    if (left != null) {
-        //        foreach (var t in left.RightmostNodes()) {
-        //            if (!(t.min.y >= max.y || t.max.y <= min.y)) {
-        //                yield return t;
-        //            }
-        //        }
-        //    }
-        //}
-
-        //public IEnumerable<QuadTreePartion<T>> AdjacentNodes() {
-        //    foreach (var n in AdjacentTop()) {
-        //        yield return n;
-        //    }
-        //    foreach (var n in AdjacentBottom()) {
-        //        yield return n;
-        //    }
-        //    foreach (var n in AdjacentRight()) {
-        //        yield return n;
-        //    }
-        //    foreach (var n in Adjacentleft()) {
-        //        yield return n;
-        //    }
-        //}
-
 
         void SubPartition() {
             q1 = partitionPool.Get();
