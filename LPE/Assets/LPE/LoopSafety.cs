@@ -3,9 +3,11 @@ namespace LPE {
     public struct LoopSafety {
         const int THROW = 1;
         const int LOG = 2;
+
         public bool hitLimit;
-        int mode;
         public int i;
+
+        int mode;
         int count;
         string msg;
 
@@ -27,8 +29,8 @@ namespace LPE {
             this.msg = msg;
             mode = LOG;
         }
-
-        public bool Inc() {
+       
+        public bool Next() {
             i++;
 
             if (i >= count) {
@@ -44,6 +46,5 @@ namespace LPE {
             }
             return true;
         }
-
     }
 }

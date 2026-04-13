@@ -1,61 +1,66 @@
-using System.Collections.Generic;
 using System;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace LPE {
+
     public class ObjectPool<T> where T : class {
-        Dictionary<T, Item> returnDict = new Dictionary<T, Item>();
+        public int createdCount => availableCount + inUseCount;
+        public int availableCount => availableItems.Count;
+        public int inUseCount => usedItems.Count;
+
+
+   
+        HashSet<T> usedItems = new HashSet<T>();
+        Stack<T> availableItems = new Stack<T>();
+
         Func<T> _constructor;
-        LinkedList<Item> freeItems = new LinkedList<Item>();
+        int warningCount;
 
-        public ObjectPool(Func<T> constructor) {
-            _constructor = constructor;
-        }
 
-        public ObjectPool(Func<T> objCreater, int initialCapacity) {
-            _constructor = objCreater;
-            for (int i = 0; i < initialCapacity; i++) {
-                CreateItem();
-            }
+        public ObjectPool(Func<T> objCreater, int warningCount = 1000) {
+            _constructor = objCreater ?? throw new ArgumentNullException(nameof(objCreater));
+            this.warningCount = warningCount;
         }
 
         public T Get() {
-            if (freeItems.First != null) {
-                var n = freeItems.First;
-
-                freeItems.RemoveFirst();
-
-                return n.Value.obj;
+            if (availableCount == 0) {
+                CreateItem();
             }
 
-            var newItem = CreateItem();
-
-            return Get();
+            var item = availableItems.Pop();
+            usedItems.Add(item);
+            return item;
         }
 
+        /// <summary>
+        /// Will throw if you double return an item or return an item that was not created by this pool
+        /// </summary>
         public void Return(T t) {
-            var n = returnDict[t].node;
-            freeItems.AddLast(n);
+            if (!usedItems.Contains(t)) {
+
+                if (availableItems.Contains(t)) {
+                    throw new InvalidOperationException($"ObjectPool.Return: Item has already been returned");
+                }
+                else {
+                    throw new InvalidOperationException($"ObjectPool.Return: Item does not belong to this pool");
+                }
+            }
+
+            usedItems.Remove(t);
+            availableItems.Push(t);
         }
 
-        Item CreateItem() {
+        public PooledItemScope<T> GetScoped() {
+            return new PooledItemScope<T>(this);
+        }
+        void CreateItem() {
             T t = _constructor();
-            Item i = new Item(t);
+            availableItems.Push(t);
 
-            returnDict.Add(t, i);
-            freeItems.AddLast(i.node);
-            return i;
-        }
-
-
-        class Item {
-            public T obj;
-            public LinkedListNode<Item> node;
-
-            public Item(T t) {
-                obj = t;
-                node = new LinkedListNode<Item>(this);
+            if (createdCount % warningCount == 0) {
+                UnityEngine.Debug.LogWarning($"ObjectPool<{typeof(T).Name}> capacity reached {createdCount}");
             }
         }
     }
+
 }

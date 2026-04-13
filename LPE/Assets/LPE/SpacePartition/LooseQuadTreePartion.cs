@@ -2,12 +2,7 @@
 using UnityEngine;
 
 namespace LPE.SpacePartition {
-
-
-
-
-
-    public class LooseQuadTreePartion<T> where T : class, IShape2D {
+    public class LooseQuadTreePartion<T> {
         static ObjectPool<LooseQuadTreePartion<T>> partitionPool;
         static LooseQuadTreePartion() {
             partitionPool = new ObjectPool<LooseQuadTreePartion<T>>(() => new LooseQuadTreePartion<T>());
@@ -32,7 +27,7 @@ namespace LPE.SpacePartition {
         int maxDepth;
         int maxOccupants = 1;
 
-        HashSet<T> _shapes = new HashSet<T>();
+        Dictionary<T, (Vector2 min, Vector2 max)> _shapes = new Dictionary<T, (Vector2 min, Vector2 max)>();
 
         public LooseQuadTreePartion() { }
 
@@ -52,7 +47,7 @@ namespace LPE.SpacePartition {
                     float maxY = float.MinValue;
 
                     foreach (var s in _shapes) {
-                        (Vector2 smin, Vector2 smax) = s.shape.AABB();
+                        (Vector2 smin, Vector2 smax) = s.Value;
 
                         minX = smin.x < minX ? smin.x : minX;
                         maxX = smax.x > maxX ? smax.x : maxX;
@@ -119,20 +114,18 @@ namespace LPE.SpacePartition {
             _shapes.Clear();
         }
 
-        public void UpdateShape(T s) {
-            Vector2 p = s.shape.position;
+        public void UpdateShape(T s, (Vector2 min, Vector2 max) aabb) {
+            Vector2 p = (min + max) / 2;
 
-
-            var c = _shapes.Contains(s);
-
+            var c = _shapes.ContainsKey(s);
 
             if (c) {
                 if (Overlap(min, max, p)) {
                     if (!leaf) {
-                        q1.UpdateShape(s);
-                        q2.UpdateShape(s);
-                        q3.UpdateShape(s);
-                        q4.UpdateShape(s);
+                        q1.UpdateShape(s, aabb);
+                        q2.UpdateShape(s, aabb);
+                        q3.UpdateShape(s, aabb);
+                        q4.UpdateShape(s, aabb);
                     }
                 }
                 else {
@@ -143,13 +136,13 @@ namespace LPE.SpacePartition {
             }
             else {
                 if (Overlap(min, max, p)) {
-                    AddShape(s);
+                    AddShape(s, aabb);
                 }
             }
         }
 
-        public void AddShape(T s) {
-            _shapes.Add(s);
+        public void AddShape(T s, (Vector2 min, Vector2 max) aabb) {
+            _shapes.Add(s, aabb);
 
             if (leaf) {
                 if (_shapes.Count > maxOccupants && maxDepth > 0) {
@@ -157,18 +150,18 @@ namespace LPE.SpacePartition {
                 }
             }
             else {
-                var p = s.shape.position;
+                var p = (min + max) / 2;
                 if (Overlap(q1.min, q1.max, p)) {
-                    q1.AddShape(s);
+                    q1.AddShape(s, aabb);
                 }
                 if (Overlap(q2.min, q2.max, p)) {
-                    q2.AddShape(s);
+                    q2.AddShape(s, aabb);
                 }
                 if (Overlap(q3.min, q3.max, p)) {
-                    q3.AddShape(s);
+                    q3.AddShape(s, aabb);
                 }
                 if (Overlap(q4.min, q4.max, p)) {
-                    q4.AddShape(s);
+                    q4.AddShape(s, aabb);
                 }
             }
 
@@ -177,7 +170,7 @@ namespace LPE.SpacePartition {
 
 
         public void RemoveShape(T s) {
-            if (!_shapes.Contains(s)) {
+            if (!_shapes.ContainsKey(s)) {
                 return;
             }
             _shapes.Remove(s);
@@ -224,36 +217,8 @@ namespace LPE.SpacePartition {
             q4 = null;
         }
 
-        public bool IsColliding(T s) {
-            var aabb = s.shape.AABB();
-            if (_shapes.Count == 0 || !Overlap(aabb.min, aabb.max, boundsMin, boundsMax)) {
-                return false;
-            }
-
-
-            if (leaf) {
-                foreach (var s2 in _shapes) {
-                    if (s2 == s) {
-                        continue;
-                    }
-
-                    if (s.shape.CheckCollision(s2.shape)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            else {
-                return q1.IsColliding(s) || q2.IsColliding(s) || q3.IsColliding(s) || q4.IsColliding(s);
-            }
-        }
-
-        public void GetOverlap(IShape2D s, HashSet<T> results) {  
-            (Vector2 aabbmin, Vector2 aabbmax) = s.shape.AABB();
-            GetOverlap(s, results, aabbmin, aabbmax);
-        }
-
-        void GetOverlap(IShape2D s, HashSet<T> results, Vector2 aabbmin, Vector2 aabbmax) {
+      
+        public void GetOverlap((Vector2 min, Vector2 max) aabb, HashSet<T> results) {
             if (_shapes.Count == 0) {
                 return;
             }
@@ -261,27 +226,23 @@ namespace LPE.SpacePartition {
 
             if (leaf) {
                 foreach (var s2 in _shapes) {
-                    if (s2 == s) {
-                        continue;
-                    }
-
-                    if (s.shape.CheckCollision(s2.shape)) {
-                        results.Add(s2);
+                    if (Math.Geometry.AABBIntersection(aabb.min, aabb.max, s2.Value.min, s2.Value.max)) { 
+                        results.Add(s2.Key);
                     }
                 }
             }
             else {
-                if (Overlap(aabbmin, aabbmax, q1.boundsMin, q1.boundsMax)) {
-                    q1.GetOverlap(s, results, aabbmin, aabbmax);
+                if (Overlap(aabb.min, aabb.max, q1.boundsMin, q1.boundsMax)) {
+                    q1.GetOverlap(aabb, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q2.boundsMin, q2.boundsMax)) {
-                    q2.GetOverlap(s, results, aabbmin, aabbmax);
+                if (Overlap(aabb.min, aabb.max, q2.boundsMin, q2.boundsMax)) {
+                    q2.GetOverlap(aabb, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q3.boundsMin, q3.boundsMax)) {
-                    q3.GetOverlap(s, results, aabbmin, aabbmax);
+                if (Overlap(aabb.min, aabb.max, q3.boundsMin, q3.boundsMax)) {
+                    q3.GetOverlap(aabb, results);
                 }
-                if (Overlap(aabbmin, aabbmax, q4.boundsMin, q4.boundsMax)) {
-                    q4.GetOverlap(s, results, aabbmin, aabbmax);
+                if (Overlap(aabb.min, aabb.max, q4.boundsMin, q4.boundsMax)) {
+                    q4.GetOverlap(aabb, results);
                 }
             }
         }
@@ -306,19 +267,23 @@ namespace LPE.SpacePartition {
                     new Vector2(max.x, midY), maxDepth - 1, maxOccupants);
 
 
-            foreach (var s in _shapes) {
-                var p = s.shape.position;
+            foreach (var kv in _shapes) {
+                var t = kv.Key;
+                var aabb = kv.Value;
+
+                var p = (aabb.min + aabb.max) / 2;
+
                 if (Overlap(q1.min, q1.max, p)) {
-                    q1.AddShape(s);
+                    q1.AddShape(t, aabb);
                 }
                 if (Overlap(q2.min, q2.max, p)) {
-                    q2.AddShape(s);
+                    q2.AddShape(t, aabb);
                 }
                 if (Overlap(q3.min, q3.max, p)) {
-                    q3.AddShape(s);
+                    q3.AddShape(t, aabb);
                 }
                 if (Overlap(q4.min, q4.max, p)) {
-                    q4.AddShape(s);
+                    q4.AddShape(t, aabb);
                 }
             }
         }

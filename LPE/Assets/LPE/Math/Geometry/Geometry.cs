@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
+
+
 namespace LPE.Math {
     public static partial class Geometry {
         public static bool IsRaySegment(Vector2 o, Vector2 d, Vector2 a, Vector2 b) {
@@ -19,27 +22,7 @@ namespace LPE.Math {
 
             return false;
         }
-        public static bool IsColinear(Vector2 p, Vector2 a, Vector2 b) {
-            if (a == b) {
-                return true;
-            }
-            if (a == p || p == b) {
-                return true;
-            }
-
-            // verticals
-            if (Mathf.Abs(b.x - a.x) <= 0.0001f) {
-                return Mathf.Abs(p.x - a.x) <= 0.0001f;
-            }
-
-            // check slopes
-            if (!Mathf.Approximately((b.y - a.y) * (p.x - a.x), (p.y - a.y) * (b.x - a.x))) {
-                return false;
-            }
-
-            return true;
-
-        }
+    
         public static bool OnSegment(Vector2 p, Vector2 a, Vector2 b) {
             if (a == b) {
                 return false;
@@ -68,53 +51,10 @@ namespace LPE.Math {
             var r = rp / rb;
             return 0 <= r && r <= 1;
         }
-       
-        
-        public static bool IsIntersecting(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2) {
-            if (a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2) {
-                return false;
-            }
-            const float EPS = 1e-10f;
-            bool result = false;
-
-
-            float denom = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
-
-            if (denom > EPS || denom < -EPS) {
-                float u_a = ((b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x)) / denom;
-                float u_b = ((a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x)) / denom;
-                float zero = EPS;
-                float one = 1f - EPS;
-
-                //Are intersecting if u_a and u_b are between 0 and 1
-                if (u_a > zero && u_a < one && u_b > zero && u_b < one) {
-                    result = true;
-                }
-            }
-
-            return result;
-
-        }
-
-
-        /// <summary>
-        /// Circle - Circle intersection
-        /// touch => should touching be counted as intersecting
-        /// </summary>
-        public static bool IsIntersecting(Vector2 c1, float r1, Vector2 c2, float r2, bool touch = false) {
-            if (touch) {
-                return (c1 - c2).sqrMagnitude <= (r1 + r2) * (r1 + r2);
-            }
-            else {
-                return (c1 - c2).sqrMagnitude <  (r1 + r2) * (r1 + r2);
-            }
-        }
-       
-        
+     
         /// <summary>
         /// Casts circle (c1,r1) along dir. Return dist to collision with (c2,r2)
         /// -1 if no collision
-        /// -2 if started colliding
         /// returns distance as a fraction of dir.magnitude, not in absolute units
         /// </summary>
         public static float CircleCast_Circle(Vector2 c1, float r1, Vector2 c2, float r2, Vector2 dir) {
@@ -123,33 +63,34 @@ namespace LPE.Math {
             double x2 = c2.x;
             double y1 = c1.y;
             double y2 = c2.y;
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            double c = dx * dx + dy * dy - r * r;
+
             // already colliding
-            if (x1 * x2 + y1 * y2 < r * r - .001f) {
-                return -2;
+            if (c <  - .001f) {
+                return 0;
             }
-            double x = c2.x - c1.x;
-            double y = c2.y - c1.y;
             double a = dir.x * dir.x +  dir.y * dir.y;
-            double b = -2 * x * dir.x - 2 * y * dir.y;
-            double c = x * x + y * y - r * r;
+            double b = -2 * dx * dir.x - 2 * dy * dir.y;
 
             var (s1, _) = SolveQuadratic(a, b, c);
-            if (s1 == null || s1 < 0) {
+            if (double.IsNaN(s1) || s1 < 0) {
                 return -1;
             }
 
-            return (float)s1.Value;
+            return (float)s1;
         }
 
         /// <summary>
-        /// ax^2 + bx + c
+        /// ax^2 + bx + c. Smaller value is returned first. (x, NaN) => 1 Solution. (NaN, NaN) => no solution
         /// </summary>
-        public static (double?, double?) SolveQuadratic(double a, double b, double c) {
+        public static (double, double) SolveQuadratic(double a, double b, double c) {
             const float eps = .00001f;
             double det = b * b - 4 * a * c;
 
             if (det <-eps) {
-                return (null, null);
+                return (double.NaN, double.NaN);
             }
 
             if (det > eps) {
@@ -167,20 +108,11 @@ namespace LPE.Math {
                 }
             }
 
-            return (-b / (2 * a), null);
+            return (-b / (2 * a), double.NaN);
 
             int Sign(double d) {
                 return d >= 0 ? 1 : -1;
             }
-        }
-    
-    
-        public static bool AABBIntersection(Vector2 amin, Vector2 amax, Vector2 bmin, Vector2 bmax) {
-            return
-                amin.x < bmax.x &&
-                amax.x > bmin.x &&
-                amin.y < bmax.y &&
-                amax.y > bmin.y;
         }
     
         public static (Vector2 a, Vector2 b)ShortenSegment(Vector2 a, Vector2 b, float amnt) {
@@ -191,12 +123,185 @@ namespace LPE.Math {
             return (a + dir, b - dir);
         }
    
-        public static (Vector2 min, Vector2 max) CircleAABB(Vector2 pos, float r) {
-            return (
-                pos - new Vector2(r,r),
-                pos + new Vector2(r,r)
-                );
+        public static Vector2 Rotate(Vector2 point, float degrees) {
+            float cosRot = Mathf.Cos(Mathf.Deg2Rad * degrees);
+            float sinRot = Mathf.Sin(Mathf.Deg2Rad * degrees);
+
+            return new Vector2(
+                point.x * cosRot - point.y * sinRot,
+                point.y * cosRot + point.x * sinRot
+            );
         }
+
+        /// <summary>
+        /// Rotates points in-place around orgin
+        /// </summary>
+        public static void Rotate(Vector2[] points, float degrees) {
+            float cosRot = Mathf.Cos(Mathf.Deg2Rad * degrees);
+            float sinRot = Mathf.Sin(Mathf.Deg2Rad * degrees);
+
+            for (int i = 0; i < points.Length; i++) {
+                Vector2 point = points[i];
+
+                points[i] = new Vector2(
+                    point.x * cosRot - point.y * sinRot,
+                    point.y * cosRot + point.x * sinRot
+                );
+            }
+
+        }
+
+        /// <summary>
+        /// Has 3 modes.  Flexible, but probably very inefficient (compared to optimal)
+        /// </summary>
+        /// <param name="s">Will be first in results list</param>
+        /// <param name="e">will be last in results list</param>
+        /// <param name="results">If null, a new list will be allocated</param>
+        /// <param name="mode">1 - skinny line. 2 - 4-way connections. 3 - corner hit=> all 4 tiles added</param>
+        /// <returns>Provided results list, or a new one if not provided.  Points will be ordered</returns>
+        public static List<Vector2Int> GetLine(Vector2 s, Vector2 e, List<Vector2Int> results, int mode = 0) {
+            results ??= new List<Vector2Int>();
+
+            // cache
+            Vector2Int start = new Vector2Int(Mathf.FloorToInt(s.x), Mathf.FloorToInt(s.y));
+            Vector2Int end = new Vector2Int(Mathf.FloorToInt(e.x), Mathf.FloorToInt(e.y));
+
+            Vector2 dir = e - s;
+            Vector2 invDir = new Vector2(1f / dir.x, 1f / dir.y);
+            int dx = dir.x == 0 ? 0 : dir.x > 0 ? 1 : -1;
+            int dy = dir.y == 0 ? 0 : dir.y > 0 ? 1 : -1;
+
+            bool yOverX = Mathf.Abs(dir.y) > Mathf.Abs(dir.x);
+            bool xOverY = Mathf.Abs(dir.x) > Mathf.Abs(dir.y);
+
+            // seed algorithm
+            Vector2Int last = start;
+            results.Add(start);
+
+            int safety = 100000; // don't trust this to work
+            while (true) {
+                safety--;
+                if (safety < 0) {
+                    Debug.Log("Warning possible infinite loop detected, breaking loop");
+                    break;
+                }
+
+                // redundant?
+                if (last == end) {
+                    break;
+                }
+
+                // next possible tiles
+                Vector2Int nx = last + new Vector2Int(dx, 0);
+                Vector2Int ny = last + new Vector2Int(0, dy);
+                Vector2Int nxy = last + new Vector2Int(dx, dy);
+
+                // check tiles for intersections
+                bool xHit = dx != 0 && LPE.Math.Geometry.RayAABBIntersection((nx, nx + Vector2Int.one), s, invDir);
+                bool xyHit = LPE.Math.Geometry.RayAABBIntersection((nxy, nxy + Vector2Int.one), s, invDir);
+                bool yHit = dy != 0 && LPE.Math.Geometry.RayAABBIntersection((ny, ny + Vector2Int.one), s, invDir);
+
+                // Mode 0 = skinny, only 1 tile should be selected
+                if (mode <= 0) {
+                    if (xyHit) {
+                        // hit corner, always go with diagonal
+                        if (xHit && yHit) {
+                            yHit = false;
+                            xHit = false;
+                        }
+                        if (xHit) {
+                            float y = dir.y > 0 ? nx.y + 1 : nx.y;
+                            float ty = y - s.y;
+                            float tx = ty * dir.x / dir.y;
+                            float x = tx + s.x;
+                            x = x - Mathf.Floor(x);
+                            if (x > 0.5f || yOverX) {
+                                xHit = false;
+                            }
+                            else {
+                                xyHit = false;
+                            }
+                        }
+                        if (yHit) {
+                            float x = dir.x > 0 ? ny.x + 1 : ny.x;
+                            float tx = x - s.x;
+                            float ty = tx * dir.y / dir.x;
+                            float y = ty + s.y;
+                            y = y - Mathf.Floor(y);
+
+                            if (y > 0.5f || xOverY) {
+                                yHit = false;
+                            }
+                            else {
+                                xyHit = false;
+                            }
+                        }
+                    }
+                }
+
+                // Mode 1, 2 tiles can be selected
+                if (mode == 1) {
+                    if (xyHit) {
+                        if (xHit && yHit) {
+                            yHit = yOverX || !xOverY;
+                            xHit = xOverY;
+                        }
+                    }
+                }
+
+                // if adjacent is end, exit early to stop diagonal from being added
+                if (nx == end) {
+                    results.Add(end);
+                    break;
+                }
+                if (ny == end) {
+                    results.Add(end);
+                    break;
+                }
+
+                // add hits
+                if (xHit) {
+                    results.Add(nx);
+                }
+
+                if (yHit) {
+                    results.Add(ny);
+                }
+
+                if (xyHit) {
+                    results.Add(nxy);
+                }
+
+                // which tile should we continue from
+                // mode = 2 is tricky
+                if (xOverY && mode >= 2) {
+                    last =
+                        xHit ? nx :
+                        nxy;
+                }
+                else if (yOverX && mode >= 2) {
+                    last =
+                        yHit ? ny :
+                        nxy;
+
+                }
+                else {
+                    // default to diagonal
+                    last =
+                        xyHit ? nxy :
+                        yHit ? ny :
+                        nx;
+                }
+
+                // redundant?
+                if (nxy == end) {
+                    break;
+                }
+            }
+
+            return results;
+        }
+
     }
 }
 

@@ -1,32 +1,65 @@
+using System.Collections;
 using System.Collections.Generic;
-using System;
 
 namespace LPE {
     /// <summary>
     /// Max Priority Queue
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class PriorityQueue<T> {
         struct Item {
-            public T value;
+            public T item;
             public float priority;
         }
 
         List<Item> _items = new List<Item>();
 
-        public bool isEmpty => _items.Count == 0;
-        public int size => _items.Count;
+        Item best;
+        bool bestExists;
+
+
+        //*************************************************************************************************************************
+        // Public
+        //*************************************************************************************************************************
+
+        public bool isEmpty => !bestExists && (_items.Count == 0);
+        public int size => _items.Count + (bestExists ? 1 : 0);
 
         public void Add(T value, float priority) {
-            _items.Add(new Item { value = value, priority = priority });
-            SiftUp(_items.Count - 1);
+
+            if (bestExists) {
+                // push existing best into queue
+                // next step will place incoming into best
+                if (priority > best.priority) {
+                    _items.Add(best);
+                    SiftUp(_items.Count - 1);
+                    bestExists = false;
+                }
+            }
+
+            // set incoming as best
+            if ((_items.Count == 0 || priority >= _items[0].priority) && !bestExists) {
+                best = new Item { item = value, priority = priority };
+                bestExists = true;
+            }
+            // push incoming into queue
+            else {
+                _items.Add(new Item { item = value, priority = priority });
+                SiftUp(_items.Count - 1);
+            }
         }
+
         public T Get() {
+            if (bestExists) {
+                var r = best;
+                best = new Item();
+                bestExists = false;
+                return r.item;
+            }
             if (_items.Count == 0) {
                 throw new System.InvalidOperationException("Trying to get item from empty PriorityQueue");
             }
 
-            T result = _items[0].value;
+            T result = _items[0].item;
             _items[0] = _items[_items.Count - 1];
             _items.RemoveAt(_items.Count - 1);
 
@@ -34,20 +67,30 @@ namespace LPE {
 
             return result;
         }
+        
         public T Peek() {
-            return _items[0].value;
+            if (bestExists) {
+                return best.item;
+            }
+            return _items[0].item;
         }
+       
+        public float PeekPriority() {
+            if (bestExists) {
+                return best.priority;
+            }
+            return _items[0].priority;
+        }
+
         public void Clear() {
+            best = new Item();
+            bestExists = false;
             _items.Clear();
         }
-        public bool Contains(T value) {
-            foreach (var item in _items) {
-                if (EqualityComparer<T>.Default.Equals(value, item.value)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+       
+        //*************************************************************************************************************************
+        // Helpers
+        //*************************************************************************************************************************
 
 
         void SiftUp(int n) {
@@ -85,12 +128,14 @@ namespace LPE {
         }
 
 
-        private void SwapNodes(int n, int p) {
+        void SwapNodes(int n, int p) {
             var temp = _items[p];
 
             _items[p] = _items[n];
             _items[n] = temp;
         }
+
+
 
         static int GetParent(int n) {
             return (n - 1) / 2;
