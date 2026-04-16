@@ -123,6 +123,103 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &349996364
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 349996366}
+  - component: {fileID: 349996365}
+  - component: {fileID: 349996367}
+  - component: {fileID: 349996368}
+  m_Layer: 0
+  m_Name: Main
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &349996365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349996364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6105ddc9248f8f41902bab18d0693cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitePawn: {fileID: 984038736, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  whiteKnight: {fileID: -2033933051, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  whiteBishop: {fileID: 118501039, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  whiteRook: {fileID: -897997069, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  whiteQueen: {fileID: 1262333561, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  whiteKing: {fileID: 1249692343, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackPawn: {fileID: -264746550, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackKnight: {fileID: -136810111, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackBishop: {fileID: 1925048788, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackRook: {fileID: 199913142, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackQueen: {fileID: -404169358, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  blackKing: {fileID: -1454056910, guid: f5021b921ce8c904686e587c2174ec6e, type: 3}
+  lightSquareSprite: {fileID: 0}
+  darkSquareSprite: {fileID: 0}
+  lightSquareColor: {r: 0.93, g: 0.85, b: 0.72, a: 1}
+  darkSquareColor: {r: 0.71, g: 0.53, b: 0.39, a: 1}
+  highlightColor: {r: 1, g: 1, b: 0, a: 0.45}
+  selectionColor: {r: 0, g: 1, b: 0, a: 0.55}
+  legalMoveColor: {r: 0, g: 0, b: 0, a: 0.25}
+  lastMoveColor: {r: 1, g: 0.84, b: 0, a: 0.4}
+  checkColor: {r: 1, g: 0, b: 0, a: 0.55}
+  whitePlayer: {fileID: 349996367}
+  blackPlayer: {fileID: 349996368}
+  squareSize: 1
+--- !u!4 &349996366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349996364}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &349996367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349996364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32b9e8543b7ec5f49814664e66ece5b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  thinkTime: 1
+--- !u!114 &349996368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349996364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed7cec5b22b271540924010ae450212c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  thinkTime: 1
+  debugRun: 0
 --- !u!1 &1495132116
 GameObject:
   m_ObjectHideFlags: 0
